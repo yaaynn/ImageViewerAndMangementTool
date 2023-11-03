@@ -1,0 +1,54 @@
+# 忽略生成的文件和文件夹
+bin/
+obj/
+*.suo
+*.user
+*.sln.docstates
+
+# 忽略IDE和编辑器生成的文件
+.vscode/
+.idea/
+.vs/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.docstates
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# 忽略操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 忽略个人配置文件
+appsettings*.json
+
+# 忽略日志文件
+*.log
+
+# 忽略数据库文件
+*.db
+*.sqlite
+*.db3
+
+# 忽略编译产生的文件
+*.dll
+*.exe
+
+# 忽略NuGet包文件
+packages/
+
+# 忽略.NET Core相关文件
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# 忽略Node.js相关文件
+node_modules/
+npm-debug.log
+
+# 忽略Yarn相关文件
+yarn-error.log
+.yarn-integrity
+.pnp.*
