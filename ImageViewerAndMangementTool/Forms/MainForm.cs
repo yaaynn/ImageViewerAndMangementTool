@@ -31,6 +31,7 @@ namespace ImageViewerAndMangementTool
 
             _basePath = ReadHistoryFile(_historyFileName);
             dataGridView_Files.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.DisplayedCells;
+            dataGridView_Files.AutoGenerateColumns = false;
             // tableLayoutPanel_ImageViewer.RowStyles.Add(new RowStyle(SizeType.Absolute, 400));
         }
 
@@ -104,28 +105,29 @@ namespace ImageViewerAndMangementTool
             {
                 return;
             }
-            Action actionCurrent = () =>
+
+            if (this.InvokeRequired) { this.BeginInvoke(() => { this.Cursor = Cursors.WaitCursor; }); }
+            else { this.Cursor = Cursors.WaitCursor; }
+            Task.Run(() =>
             {
                 try
                 {
-                    Cursor cursor = this.Cursor;
-                    this.Cursor = Cursors.WaitCursor;
-                    Task.Run(() =>
-                    {
-                        action();
-                        this.Invoke(() =>
-                        {
-                            this.Cursor = cursor;
-                        });
-                    });
+                    action();
                 }
                 catch (Exception ex)
                 {
                     ShowErrorDialog(ex.Message);
                 }
-            };
-            if (this.InvokeRequired) { this.Invoke(actionCurrent); }
-            else { actionCurrent(); }
+                finally
+                {
+                    this.Invoke(() =>
+                    {
+                        this.Cursor = Cursors.Default;
+                    });
+                }
+            });
+            
+            
         }
 
         /// <summary>
@@ -154,10 +156,19 @@ namespace ImageViewerAndMangementTool
         /// <returns></returns>
         private List<FileInformation> GetFileList(string path)
         {
-            string[] filedir = Directory.GetFiles(path, "*", SearchOption.AllDirectories);
+
+            string[] filters = { "*.jpg", "*.jpeg", "*.png", "*.gif", "*.bmp", "*.tiff", "*.svg", "*.webp", "*.avif", "*.apng", "*.heif", "*.eps", "*.ai", "*.pdf", "*.psd", "*.raw" };
+
+            List<string> filedirs = new List<string>();
+
+            foreach (var filter in filters)
+            {
+                filedirs.AddRange(Directory.GetFiles(path, filter, SearchOption.AllDirectories));
+            }
+
             List<FileInformation> files = new List<FileInformation>();
 
-            foreach (string file in filedir)
+            foreach (string file in filedirs)
             {
                 FileInfo fileInfo = new FileInfo(file);
 
@@ -210,18 +221,33 @@ namespace ImageViewerAndMangementTool
                 }
                 return;
             }
+            if (dataGridView_Files.SelectedRows.Count == 0) return;
+
+            _currentIndex = dataGridView_Files.SelectedRows[0].Index;
+
 
             // 判断选定行是否在可视窗口内
             if (_currentIndex < dataGridView_Files.FirstDisplayedScrollingRowIndex ||
                 _currentIndex >= dataGridView_Files.FirstDisplayedScrollingRowIndex + dataGridView_Files.DisplayedRowCount(true))
             {
-                // 选定行不在可视窗口内，将其滚动到可视窗口内
-                dataGridView_Files.FirstDisplayedScrollingRowIndex = _currentIndex;
+                // 在视窗的上边
+                if (_currentIndex < dataGridView_Files.FirstDisplayedScrollingRowIndex)
+                {
+                    // 选定行不在可视窗口内，将其滚动到可视窗口内
+                    dataGridView_Files.FirstDisplayedScrollingRowIndex = _currentIndex;
+                }
+                // 在视窗下边
+                else
+                {
+                    int location = _currentIndex - dataGridView_Files.DisplayedRowCount(true) + 2;
+                    if (location < 0) location = 0;
+                    if (location > dataGridView_Files.RowCount - 1) location = dataGridView_Files.RowCount - 1;
+                    // 选定行不在可视窗口内，将其滚动到可视窗口内
+                    dataGridView_Files.FirstDisplayedScrollingRowIndex = location;
+                }
             }
 
-            if (dataGridView_Files.SelectedRows.Count == 0) return;
-
-            _currentIndex = dataGridView_Files.SelectedRows[0].Index;
+            
 
             FileInformation fileInformation = _files[_currentIndex];
             if (fileInformation.Mark)
@@ -612,7 +638,9 @@ namespace ImageViewerAndMangementTool
                 case Keys.Right:
                     ChangeImage(_currentIndex + 1);
                     break;
-
+                case Keys.F5:
+                    RefreshFilePath(_basePath);
+                    break;
             }
 
 
